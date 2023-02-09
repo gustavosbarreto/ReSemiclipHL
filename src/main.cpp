@@ -27,17 +27,6 @@ int OnMetaAttach()
 
 	g_RehldsHookchains->SV_CreatePacketEntities()->registerHook(&SV_CreatePacketEntities, HC_PRIORITY_HIGH);
 
-	g_ReGameHookchains->CBasePlayer_Spawn()->registerHook(&CBasePlayer_Spawn, HC_PRIORITY_DEFAULT + 1);
-	g_ReGameHookchains->RadiusFlash_TraceLine()->registerHook(&RadiusFlash_TraceLine, HC_PRIORITY_HIGH);
-
-	if (g_Config.GetTime()) {
-		g_ReGameHookchains->CSGameRules_OnRoundFreezeEnd()->registerHook(&CSGameRules_OnRoundFreezeEnd, HC_PRIORITY_DEFAULT + 1);
-	}
-
-	if (g_Config.GetPenetFire()) {
-		g_ReGameHookchains->CBasePlayer_TraceAttack()->registerHook(&CBasePlayer_TraceAttack, HC_PRIORITY_DEFAULT + 1);
-	}
-
 	return TRUE;
 }
 
@@ -47,18 +36,6 @@ void OnMetaDetach()
 	g_pNewFunctionTable->pfnShouldCollide = nullptr;
 
 	g_RehldsHookchains->SV_CreatePacketEntities()->unregisterHook(&SV_CreatePacketEntities);
-
-	g_ReGameHookchains->InstallGameRules()->unregisterHook(&InstallGameRules);
-	g_ReGameHookchains->CBasePlayer_Spawn()->unregisterHook(&CBasePlayer_Spawn);
-	g_ReGameHookchains->RadiusFlash_TraceLine()->unregisterHook(&RadiusFlash_TraceLine);
-
-	if (g_Config.GetTime()) {
-		g_ReGameHookchains->CSGameRules_OnRoundFreezeEnd()->unregisterHook(&CSGameRules_OnRoundFreezeEnd);
-	}
-
-	if (g_Config.GetPenetFire()) {
-		g_ReGameHookchains->CBasePlayer_TraceAttack()->unregisterHook(&CBasePlayer_TraceAttack);
-	}
 
 	bActivated = false;
 	bInitialized = false;
@@ -217,17 +194,6 @@ state_update:
 		}
 		else
 		{
-			if (pl && pl->m_iTeam == TERRORIST)
-			{
-				CGrenade *pGrenade = (CGrenade *)GET_PRIVATE(pEnt);
-
-				if (*(CGrenade **)pGrenade == g_pVirtualGrenade && pGrenade->m_bIsC4)
-				{
-					state->solid = SOLID_NOT;
-					continue;
-				}
-			}
-
 			if (pEnt->v.aiment && pEnt->v.movetype == MOVETYPE_FOLLOW && pEnt->v.aiment != pHost)
 			{
 				int playerIndex = EDICT_NUM(pEnt->v.aiment);
@@ -342,26 +308,6 @@ void PM_Move(playermove_t *pm, int server)
 	edict_t *pHost = EDICT(host);
 	CBasePlayer *pCBasePlayer = (CBasePlayer *)CBaseEntity::Instance(pHost);
 
-	if (pCBasePlayer && pCBasePlayer->IsPlayer() && pCBasePlayer->m_iTeam == TERRORIST)
-	{
-		// to changes mins / maxs c4 from physents
-		for (int i = 0; i < pm->numphysent; ++i)
-		{
-			CBaseEntity *pEntity = (CBaseEntity *)GET_PRIVATE(EDICT(pm->physents[i].info));
-			CGrenade *pGrenade = (CGrenade *)pEntity;
-
-			if (*(CGrenade **)pGrenade != g_pVirtualGrenade || !pGrenade->m_bIsC4) {
-				continue;
-			}
-
-			pm->physents[i].maxs = {};
-			pm->physents[i].mins = {};
-
-			// it found
-			break;
-		}
-	}
-
 	for (j = 0; j < pm->numphysent; ++j)
 	{
 		if (pm->physents[++numphysent].player && ++numphyspl) {
@@ -452,9 +398,6 @@ void PM_Move(playermove_t *pm, int server)
 		{
 			g_RehldsHookchains->SV_CreatePacketEntities()->unregisterHook(&SV_CreatePacketEntities);
 
-			g_ReGameHookchains->CBasePlayer_Spawn()->unregisterHook(&CBasePlayer_Spawn);
-			g_ReGameHookchains->CBasePlayer_TraceAttack()->unregisterHook(&CBasePlayer_TraceAttack);
-
 			g_pFunctionTable->pfnPM_Move = nullptr;
 			g_pNewFunctionTable->pfnShouldCollide = nullptr;
 		}
@@ -542,10 +485,6 @@ void SVR_SemiclipOption()
 	{
 		g_RehldsHookchains->SV_CreatePacketEntities()->unregisterHook(&SV_CreatePacketEntities);
 
-		g_ReGameHookchains->CBasePlayer_Spawn()->unregisterHook(&CBasePlayer_Spawn);
-		g_ReGameHookchains->CBasePlayer_TraceAttack()->unregisterHook(&CBasePlayer_TraceAttack);
-		g_ReGameHookchains->CSGameRules_OnRoundFreezeEnd()->unregisterHook(&CSGameRules_OnRoundFreezeEnd);
-
 		g_pFunctionTable->pfnPM_Move = nullptr;
 		g_pNewFunctionTable->pfnShouldCollide = nullptr;
 	}
@@ -572,10 +511,6 @@ void SVR_SemiclipOption()
 				g_RehldsHookchains->SV_CreatePacketEntities()->unregisterHook(&SV_CreatePacketEntities);
 				g_RehldsHookchains->SV_CreatePacketEntities()->registerHook(&SV_CreatePacketEntities, HC_PRIORITY_HIGH);
 				
-				g_ReGameHookchains->CBasePlayer_Spawn()->unregisterHook(&CBasePlayer_Spawn);
-				g_ReGameHookchains->CBasePlayer_Spawn()->registerHook(&CBasePlayer_Spawn, HC_PRIORITY_DEFAULT + 1);
-				g_ReGameHookchains->CSGameRules_OnRoundFreezeEnd()->unregisterHook(&CSGameRules_OnRoundFreezeEnd);
-
 				g_pFunctionTable->pfnPM_Move = PM_Move;
 				g_pNewFunctionTable->pfnShouldCollide = ShouldCollide;
 			}

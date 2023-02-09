@@ -113,12 +113,6 @@ C_DLLEXPORT int Meta_Attach(PLUG_LOADTIME now, META_FUNCTIONS *pFunctionTable, m
 		return FALSE;
 	}
 
-	g_bReGameDLL = RegamedllApi_Init();
-
-	if (!g_bReGameDLL) {
-		return FALSE;
-	}
-
 	if(!OnMetaAttach()) {
 		return FALSE;
 	}
@@ -140,7 +134,7 @@ C_DLLEXPORT int Meta_Detach(PLUG_LOADTIME now, PL_UNLOAD_REASON reason)
 		return FALSE;
 	}
 
-	if (g_bReHLDS && g_bReGameDLL)
+	if (g_bReHLDS)
 	{
 		OnMetaDetach();
 	}
