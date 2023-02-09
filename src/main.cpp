@@ -5,6 +5,7 @@ CGamePlayer g_Players[MAX_CLIENTS];
 CConfig g_Config;
 CGameData g_GameData;
 CBaseEntity *g_pVirtualGrenade;
+const char* g_szTeamList;
 bool bInitialized = false;
 bool bActivated = false;
 
@@ -16,6 +17,49 @@ struct {
 g_RegVirtualTable[] = {
 	{ "grenade", g_pVirtualGrenade }
 };
+
+bool Semiclip_IsTeamAllowed(int playerTeamId, int otherTeamId)
+{
+	switch (g_Config.GetTeam())
+	{
+	case SEMICLIP_ALL: return true;
+	case SEMICLIP_ONLY_BLUE: return playerTeamId == BLUE_TEAM && otherTeamId == BLUE_TEAM;
+	case SEMICLIP_ONLY_RED: return playerTeamId == RED_TEAM && otherTeamId == RED_TEAM;
+	case SEMICLIP_ONLY_TEAMMATES: return playerTeamId == otherTeamId;
+	}
+
+	return false;
+}
+
+int GetTeamId(edict_t* pEntity)
+{
+	char* infobuffer = (*g_engfuncs.pfnGetInfoKeyBuffer)(pEntity);
+
+	char model[16];
+
+	strcpy(model, (g_engfuncs.pfnInfoKeyValue(infobuffer, "model")));
+
+	const char* pos = strstr(g_szTeamList, model);
+	char* sofar = (char*)g_szTeamList;
+
+	int team = 1;
+
+	if (sofar == NULL)
+		team = -1;
+	else
+	{
+		// count ";"s
+		while (sofar < pos)
+		{
+			if (*sofar == ';')
+				team++;
+
+			sofar = sofar + 1;
+		}
+	}
+
+	return team;
+}
 
 int OnMetaAttach()
 {
@@ -53,6 +97,8 @@ void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax)
 	g_GameData.SetMaxClients(clientMax);
 	g_GameData.SetMaxClientEdict(pEdictList + clientMax);
 	g_GameData.SetStartEnt(pEdictList + 1);
+
+	g_szTeamList = CVAR_GET_STRING("mp_teamlist");
 
 	for (int i = 0; i < clientMax; i++)
 	{
@@ -247,18 +293,13 @@ inline bool allowDontSolid(playermove_t *pm, edict_t *pHost, int host, int j)
 	Vector hostOrigin = pevHost->origin;
 	Vector entOrigin = pevEnt->origin;
 	int IndexObject = pObject->GetIndex();
-	int hostTeamId = HostPlayer->m_iTeam;
-	int entTeamId = EntPlayer->m_iTeam;
+	int hostTeamId = GetTeamId(pHost); 
+	int entTeamId = GetTeamId(pEntity);
 
 	*pPlayer->GetDiff(pObject) = GET_DISTANCE(hostOrigin, entOrigin);
-	*pPlayer->GetSolid(pObject) = (hostTeamId == 3
-									|| ((g_Config.GetEffects()
-									|| *pPlayer->GetDiff(pObject) < g_Config.GetDistance())
-									&& ((g_Config.GetTeam() == 0) ? 1
-									: (g_Config.GetTeam() == 3) ? (hostTeamId == entTeamId)
-									: (hostTeamId == g_Config.GetTeam()
-									&& entTeamId == g_Config.GetTeam()))
-									&& !pObject->GetDont()));
+	*pPlayer->GetSolid(pObject) = ((g_Config.GetEffects() || *pPlayer->GetDiff(pObject) < g_Config.GetDistance())
+									&& Semiclip_IsTeamAllowed(hostTeamId, entTeamId)
+									&& !pObject->GetDont());
 
 	if (g_Config.GetCrouch() && pPlayer->GetSolid(IndexObject))
 	{
@@ -343,7 +384,7 @@ void PM_Move(playermove_t *pm, int server)
 
 		bool bCollide = false;
 		bool needSolid = false;
-		int hostTeamId = pCBasePlayer->m_iTeam;
+		int hostTeamId = GetTeamId(pHost);
 		Vector hostOrigin = pHost->v.origin;
 		CGamePlayer *pPlayer = PLAYER_FOR_NUM(host - 1);
 		edict_t *pEntity;
@@ -374,10 +415,7 @@ void PM_Move(playermove_t *pm, int server)
 					continue;
 				}
 
-				if ((g_Config.GetTeam() == 0) ? 1
-					: (g_Config.GetTeam() == 3) ? (hostTeamId == EntPlayer->m_iTeam)
-					: (hostTeamId == g_Config.GetTeam()
-					&& EntPlayer->m_iTeam == g_Config.GetTeam()))
+				if (Semiclip_IsTeamAllowed(hostTeamId, GetTeamId(pEntity)))
 				{
 					bCollide = true;
 				}

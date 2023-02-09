@@ -2,10 +2,24 @@
 #define _INCLUDE_MAIN_H_
 
 #define MIN_AMOUNT				100.0f
-#define FLOAT_CROUCH			49.9f
+#define FLOAT_CROUCH			35.9f
 #define MAX_CLIENTS				32
 #define GET_DISTANCE(a, b)		((a - b).Length2D())
 #define GET_COLLIDE(a, b)		(abs(a.z - b.z) < 96 && (a - b).Length2D() < 96)
+
+enum
+{
+	BLUE_TEAM = 1,
+	RED_TEAM = 2,
+};
+
+enum
+{
+	SEMICLIP_ALL = 0,
+	SEMICLIP_ONLY_BLUE = 1,
+	SEMICLIP_ONLY_RED = 2,
+	SEMICLIP_ONLY_TEAMMATES = 3
+};
 
 extern int DispatchSpawn(edict_t *pEntity);
 extern int ShouldCollide(edict_t *pentTouched, edict_t *pentOther);
