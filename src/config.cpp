@@ -79,20 +79,18 @@ void Print_Settings()
 {
 	static const char *szConditon[] = {
 		" (for all)",
-		" (only Terrorists)",
-		" (only Counter-Terrorists)",
+		" (only BLUE team)",
+		" (only RED team)",
 		" (only teammates)"
 	};
 
 	SEM_PRINT("\n\nusage: semiclip_option\n\n [command]	[value]   [description]\n");
 	SEM_PRINT(" semiclip	%d	- enable/disable semiclip", g_Config.GetEnable());
 	SEM_PRINT(" team		%d	- condition for teams %s", g_Config.GetTeam(), szConditon[ g_Config.GetTeam() ]);
-	SEM_PRINT(" time		%0.0f	- how many time in seconds semiclip will work from the beginning of the round", g_Config.GetTime());
 	SEM_PRINT(" crouch		%d	- allows jump to crouching players when semiclip works", g_Config.GetCrouch());
 	SEM_PRINT(" distance	%0.0f	- at what distance player can have transparency and semiclip", g_Config.GetDistance());
 	SEM_PRINT(" effects	%d	- effect of transparency of the player. Depends from distance between players", g_Config.GetEffects());
 	SEM_PRINT(" transparency	%d	- transparency of the player", g_Config.GetTransparency());
-	SEM_PRINT(" penetfire	%d	- Allow fire penetration through transparent the of teammates", g_Config.GetPenetFire());
 }
 
 static int Parse_Config(const char *path)
