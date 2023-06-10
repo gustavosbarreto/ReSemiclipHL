@@ -1,0 +1,23 @@
+name: C/C++ CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Intel OneApi tools
+    - uses: rscohn2/setup-oneapi@v0
+      with:
+        list: true
+        components: |
+          icx
+          
+    - name: Install dependencies
+      run: make
+
+    - name: Run check
+      run: make check
