@@ -2,12 +2,12 @@
 
 plugin_info_t Plugin_info = {
 	META_INTERFACE_VERSION,
-	"ReSemiclip",
+	"ReSemiclipHL",
 	"2.3.9",
-	"13/02/17",
-	"s1lent & Adidasman",
-	"http://www.dedicated-server.ru/",
-	"ReSemiclip",
+	"18/06/23",
+	"s1lent, Adidasman & rtxa",
+	"https://github.com/rtxa/ReSemiclipHL/",
+	"ReSemiclipHL",
 	PT_CHANGELEVEL,
 	PT_ANYTIME
 };
