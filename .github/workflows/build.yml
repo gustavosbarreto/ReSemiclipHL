@@ -1,23 +1,61 @@
-name: C/C++ CI
+name: Build release
 
 on: [push, pull_request]
 
 jobs:
-  build:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v1.3.1
+      
+      - name: Build Release
+        run: |
+          msbuild msvc\resemiclip.sln /p:Configuration=Release
+
+      - name: Copy dist files
+        run: |
+          mkdir Release\resemiclip
+          copy msvc\Release\resemiclip_mm.dll Release/resemiclip
+          xcopy /s dist Release\resemiclip
+        
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: resemicliphl-windows
+          path: Release/
+
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
     
-    - name: Install Intel OneApi tools
-    - uses: rscohn2/setup-oneapi@v0
-      with:
-        list: true
-        components: |
-          icx
-          
     - name: Install dependencies
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y gcc-multilib g++-multilib
+        sudo apt-get install -y build-essential
+        sudo apt-get install -y libc6-dev libc6-dev-i386
+
+    - name: Build Release
       run: make
 
-    - name: Run check
-      run: make check
+    - name: Copy dist files
+      run: |
+        cd Release
+        mkdir resemiclip
+        mv resemiclip_mm_i386.so resemiclip/resemiclip_mm_i386.so 
+        cp -a ../dist/. resemiclip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: resemicliphl-linux
+        path: Release/
