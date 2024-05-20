@@ -23,42 +23,12 @@ bool Semiclip_IsTeamAllowed(int playerTeamId, int otherTeamId)
 	switch (g_Config.GetTeam())
 	{
 	case SEMICLIP_ALL: return true;
-	case SEMICLIP_ONLY_BLUE: return playerTeamId == BLUE_TEAM && otherTeamId == BLUE_TEAM;
-	case SEMICLIP_ONLY_RED: return playerTeamId == RED_TEAM && otherTeamId == RED_TEAM;
+	case SEMICLIP_ONLY_TERRORIST: return playerTeamId == TERRORIST_TEAM && otherTeamId == TERRORIST_TEAM;
+	case SEMICLIP_ONLY_CT: return playerTeamId == CT_TEAM && otherTeamId == CT_TEAM;
 	case SEMICLIP_ONLY_TEAMMATES: return playerTeamId == otherTeamId;
 	}
 
 	return false;
-}
-
-int GetTeamId(edict_t* pEntity)
-{
-	char* infobuffer = (*g_engfuncs.pfnGetInfoKeyBuffer)(pEntity);
-
-	char model[16];
-
-	strcpy(model, (g_engfuncs.pfnInfoKeyValue(infobuffer, "model")));
-
-	const char* pos = strstr(g_szTeamList, model);
-	char* sofar = (char*)g_szTeamList;
-
-	int team = 1;
-
-	if (sofar == NULL)
-		team = -1;
-	else
-	{
-		// count ";"s
-		while (sofar < pos)
-		{
-			if (*sofar == ';')
-				team++;
-
-			sofar = sofar + 1;
-		}
-	}
-
-	return team;
 }
 
 int OnMetaAttach()
@@ -293,8 +263,8 @@ inline bool allowDontSolid(playermove_t *pm, edict_t *pHost, int host, int j)
 	Vector hostOrigin = pevHost->origin;
 	Vector entOrigin = pevEnt->origin;
 	int IndexObject = pObject->GetIndex();
-	int hostTeamId = GetTeamId(pHost); 
-	int entTeamId = GetTeamId(pEntity);
+	int hostTeamId = HostPlayer->m_iTeam;
+	int entTeamId = EntPlayer->m_iTeam;
 
 	*pPlayer->GetDiff(pObject) = GET_DISTANCE(hostOrigin, entOrigin);
 	*pPlayer->GetSolid(pObject) = ((g_Config.GetEffects() || *pPlayer->GetDiff(pObject) < g_Config.GetDistance())
@@ -384,7 +354,7 @@ void PM_Move(playermove_t *pm, int server)
 
 		bool bCollide = false;
 		bool needSolid = false;
-		int hostTeamId = GetTeamId(pHost);
+		int hostTeamId = pCBasePlayer->m_iTeam;
 		Vector hostOrigin = pHost->v.origin;
 		CGamePlayer *pPlayer = PLAYER_FOR_NUM(host - 1);
 		edict_t *pEntity;
@@ -415,7 +385,7 @@ void PM_Move(playermove_t *pm, int server)
 					continue;
 				}
 
-				if (Semiclip_IsTeamAllowed(hostTeamId, GetTeamId(pEntity)))
+				if (Semiclip_IsTeamAllowed(hostTeamId, EntPlayer->m_iTeam))
 				{
 					bCollide = true;
 				}

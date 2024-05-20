@@ -79,8 +79,8 @@ void Print_Settings()
 {
 	static const char *szConditon[] = {
 		" (for all)",
-		" (only BLUE team)",
-		" (only RED team)",
+		" (only TERRORIST team)",
+		" (only CT team)",
 		" (only teammates)"
 	};
 
